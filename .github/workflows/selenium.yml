@@ -1,0 +1,32 @@
+name: Run Selenium Script
+
+on:
+  schedule:
+    - cron: '0 9 * * *'   # daily at 9am UTC
+  workflow_dispatch:        # manual trigger button in GitHub UI
+
+jobs:
+  selenium:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser chromium-chromedriver
+          echo "CHROMEDRIVER=$(which chromedriver)" >> $GITHUB_ENV
+          echo "CHROME=$(which chromium-browser)" >> $GITHUB_ENV
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install gems
+        run: gem install selenium-webdriver
+
+      - name: Run Selenium script
+        run: ruby script.rb
