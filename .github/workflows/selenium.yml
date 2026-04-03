@@ -1,40 +1,46 @@
-name: Submit Form
+name: Run Selenium Scraper
 
 on:
-  workflow_dispatch:        # manual trigger only
-    inputs:
-      message:
-        description: 'Message to send to the form'
-        required: true
-        default: 'Hello!'
+  schedule:
+    - cron: '0 15 * * *' # Runs every day at 3pm UTC
+  workflow_dispatch:
 
 jobs:
-  selenium:
+  scrape:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Install Chrome
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Google Chrome
         run: |
           sudo apt-get update
-          sudo apt-get install -y chromium-browser chromium-chromedriver
-          # Tell Selenium exactly where chromium is
-          echo "CHROME_BIN=$(which chromium-browser)" >> $GITHUB_ENV
-          echo "CHROMEDRIVER_BIN=$(which chromedriver)" >> $GITHUB_ENV
+          sudo apt-get install -y wget gnupg
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
+      - name: Install ChromeDriver
+        run: |
+          # Matching Chrome version 132
+          CHROMEDRIVER_VERSION="132.0.6834.83"
+          echo "Installing ChromeDriver version: $CHROMEDRIVER_VERSION"
+          wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$CHROMEDRIVER_VERSION/linux64/chromedriver-linux64.zip"
+          unzip chromedriver-linux64.zip
+          sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
+          sudo chmod +x /usr/local/bin/chromedriver
 
-      - name: Install gems
-        run: gem install selenium-webdriver
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run Selenium script
-        run: ruby script.rb
-        env:
-          SITE_EMAIL: ${{ secrets.SITE_EMAIL }}
-          SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
-          INPUT_MESSAGE: ${{ github.event.inputs.message }}
+      - name: Execute Python Script
+        run: python main.py
