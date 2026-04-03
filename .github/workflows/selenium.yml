@@ -1,9 +1,12 @@
-name: Run Selenium Script
+name: Submit Form
 
 on:
-  schedule:
-    - cron: '0 9 * * *'   # daily at 9am UTC
-  workflow_dispatch:        # manual trigger button in GitHub UI
+  workflow_dispatch:        # manual trigger only
+    inputs:
+      message:
+        description: 'Message to send to the form'
+        required: true
+        default: 'Hello!'
 
 jobs:
   selenium:
@@ -17,8 +20,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y chromium-browser chromium-chromedriver
-          echo "CHROMEDRIVER=$(which chromedriver)" >> $GITHUB_ENV
-          echo "CHROME=$(which chromium-browser)" >> $GITHUB_ENV
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -30,3 +31,7 @@ jobs:
 
       - name: Run Selenium script
         run: ruby script.rb
+        env:
+          SITE_EMAIL: ${{ secrets.SITE_EMAIL }}
+          SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
+          INPUT_MESSAGE: ${{ github.event.inputs.message }}
