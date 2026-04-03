@@ -1,4 +1,4 @@
-name: Run Selenium Scraper
+name: Run Selenium Scraper2
 
 on:
   schedule:
