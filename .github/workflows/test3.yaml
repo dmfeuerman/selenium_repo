@@ -1,0 +1,31 @@
+name: Run Propensity Scraper3
+
+on:
+  workflow_dispatch:
+    inputs:
+      site_email:
+        description: 'Login Email'
+        required: true
+      site_password:
+        description: 'Login Password'
+        required: true
+      campaign_name:
+        description: 'Campaign Name'
+        required: true
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Execute Scraper
+        env:
+          # Priority: Use the input from curl, otherwise fall back to the Secret
+          SITE_EMAIL: ${{ github.event.inputs.site_email || secrets.SITE_EMAIL }}
+          SITE_PASSWORD: ${{ github.event.inputs.site_password || secrets.SITE_PASSWORD }}
+          TARGET_CAMPAIGN_NAME: ${{ github.event.inputs.campaign_name }}
+        run: python main.py
