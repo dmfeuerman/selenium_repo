@@ -40,6 +40,8 @@ jobs:
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
+          # Explicitly install selenium to be safe
+          pip install selenium
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Execute Python Script
